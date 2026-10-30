@@ -1,0 +1,16 @@
+hass-kiwee
+Copyright 2026 rschoell
+
+This product is derived from hass-gocoax
+(https://github.com/homeassistant-projects/hass-gocoax),
+Copyright (c) 2022 Ryan Snodgrass, licensed under the Apache License, Version 2.0.
+
+Changes made for hass-kiwee (Apache-2.0, section 4b):
+- renamed the integration, package and entities for Kiwee Broadband MoCA adapters
+- rewrote the adapter API client: POST requests with JSON bodies and CSRF cookie/header,
+  node table, PHY rate calculation, channel plan, Ethernet counters and settings as used by
+  the adapters' own web pages
+- added sensors (channels, Tx/Beacon power, Preferred NC, per-peer TX good packets)
+- added tools, documentation and tests
+
+Every modified source file carries a notice at the top.

@@ -1,0 +1,120 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Kiwee Broadband Adapter",
+        "description": "Enter the connection details for your Kiwee Broadband MoCA adapter. [☕ Tip the Author](https://buymeacoffee.com/DYks67r)",
+        "data": {
+          "host": "Host",
+          "username": "Username",
+          "password": "Password"
+        },
+        "data_description": {
+          "host": "IP address or hostname of your Kiwee Broadband adapter",
+          "username": "Admin username (default: admin)",
+          "password": "Admin password (default: maxlinear)"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate Kiwee Broadband Adapter",
+        "description": "Please re-enter credentials for {host}",
+        "data": {
+          "username": "Username",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to the Kiwee Broadband adapter. Verify the IP address and that the adapter is powered on.",
+      "invalid_auth": "Invalid username or password. Default credentials are admin/maxlinear.",
+      "unknown": "An unexpected error occurred. Check the logs for details."
+    },
+    "abort": {
+      "already_configured": "This Kiwee Broadband adapter is already configured.",
+      "reauth_successful": "Re-authentication was successful."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Kiwee Broadband Options",
+        "description": "Configure polling options for your Kiwee Broadband adapter.",
+        "data": {
+          "scan_interval": "Update interval"
+        },
+        "data_description": {
+          "scan_interval": "How often to poll the adapter for updates (seconds)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "moca_version": {
+        "name": "MoCA Version"
+      },
+      "mac_address": {
+        "name": "MAC Address"
+      },
+      "ip_address": {
+        "name": "IP Address"
+      },
+      "node_id": {
+        "name": "Node ID"
+      },
+      "tx_packets": {
+        "name": "TX Packets"
+      },
+      "rx_packets": {
+        "name": "RX Packets"
+      },
+      "peer_count": {
+        "name": "Network Peers"
+      },
+      "frequency_band": {
+        "name": "Frequency Band"
+      },
+      "lof": {
+        "name": "Lowest Operating Frequency"
+      },
+      "channel_count": {
+        "name": "Channel Count"
+      },
+      "phy_tx_rate": {
+        "name": "PHY TX Rate"
+      },
+      "phy_rx_rate": {
+        "name": "PHY RX Rate"
+      },
+      "tx_power": {
+        "name": "Tx power level"
+      },
+      "beacon_power": {
+        "name": "Beacon power level"
+      },
+      "primary_channel": {
+        "name": "Primary channel"
+      },
+      "secondary_channel": {
+        "name": "Secondary channel"
+      },
+      "beacon_channel": {
+        "name": "Beacon channel"
+      },
+      "first_channel": {
+        "name": "First channel"
+      }
+    },
+    "binary_sensor": {
+      "link_status": {
+        "name": "Link Status"
+      },
+      "network_controller": {
+        "name": "Network Controller"
+      },
+      "preferred_nc": {
+        "name": "Preferred Network Controller"
+      }
+    }
+  }
+}
