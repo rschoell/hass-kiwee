@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+# raw adapter dumps contain MAC addresses - never commit them
+probe*.txt
+*.har

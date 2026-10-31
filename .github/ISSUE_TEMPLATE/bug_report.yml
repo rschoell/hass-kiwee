@@ -1,0 +1,34 @@
+name: Bug report
+description: Something does not work with your Kiwee adapter
+body:
+  - type: input
+    id: model
+    attributes:
+      label: Adapter model and firmware
+      description: e.g. KB-M3-02, firmware 1.18.13 (shown on the adapter's Device Status page)
+    validations:
+      required: true
+  - type: input
+    id: ha
+    attributes:
+      label: Home Assistant version
+    validations:
+      required: true
+  - type: textarea
+    id: selftest
+    attributes:
+      label: Output of `python tools/selftest.py <adapter-ip>`
+      description: Run it from the repository folder on a machine in your LAN. Replace MAC addresses with xx before posting.
+      render: text
+  - type: textarea
+    id: logs
+    attributes:
+      label: Home Assistant log
+      description: Set `custom_components.kiwee: debug` under `logger:` and paste the relevant lines (no passwords or MAC addresses).
+      render: text
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true

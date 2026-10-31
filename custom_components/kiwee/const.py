@@ -38,7 +38,7 @@ MODELS: Final = {
 }
 
 # platforms
-PLATFORMS: Final = ["sensor", "binary_sensor"]
+PLATFORMS: Final = ["sensor", "binary_sensor", "button"]
 
 # entity categories
 ATTR_MAC_ADDRESS: Final = "mac_address"
@@ -57,3 +57,6 @@ ATTR_RX_DROPPED: Final = "rx_dropped"
 ATTR_PEER_COUNT: Final = "peer_count"
 ATTR_PHY_TX_RATE: Final = "phy_tx_rate"
 ATTR_PHY_RX_RATE: Final = "phy_rx_rate"
+
+# while an adapter restarts: poll this often (seconds) to notice when it is back
+REBOOT_POLL_INTERVAL: Final = 10

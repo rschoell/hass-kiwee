@@ -35,6 +35,7 @@ LOG = logging.getLogger(__name__)
 
 # API endpoints - JSON data
 ENDPOINT_MAC = "/ms/1/0x103/GET"
+ENDPOINT_REBOOT = "/ms/1/0xb00"  # POST {"data":[]}, sent by reboot.html
 ENDPOINT_LOCAL_INFO = "/ms/0/0x15"
 ENDPOINT_FRAME_INFO = "/ms/0/0x14"
 ENDPOINT_FMR_INFO = "/ms/0/0x1D"
@@ -130,6 +131,18 @@ class KiweeClient:
             pass
         self._csrf_token = token or secrets.token_hex(16).upper()
 
+    def _ms_headers(self, auth: dict[str, str], page: str = "devStatus.html") -> dict[str, str]:
+        """Headers of a web UI POST: Basic auth, CSRF cookie + header, origin and referer."""
+        return {
+            **auth,
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Accept": "text/html, */*",
+            "X-CSRF-TOKEN": self._csrf_token or "",
+            "Cookie": f"csrf_token={self._csrf_token}",
+            "Origin": self._base_url,
+            "Referer": f"{self._base_url}/{page}",
+        }
+
     async def _post_ms(
         self,
         session: ClientSession,
@@ -141,15 +154,7 @@ class KiweeClient:
         """POST an /ms/ query with CSRF cookie + header."""
         if self._csrf_token is None:
             await self._refresh_csrf(session, auth)
-        headers = {
-            **auth,
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Accept": "text/html, */*",
-            "X-CSRF-TOKEN": self._csrf_token,
-            "Cookie": f"csrf_token={self._csrf_token}",
-            "Origin": self._base_url,
-            "Referer": f"{self._base_url}/devStatus.html",
-        }
+        headers = self._ms_headers(auth)
         async with session.post(
             url, data=body, headers=headers
         ) as resp:
@@ -606,6 +611,46 @@ class KiweeClient:
             secondary_channel=secondary_channel,
             first_channel=first_channel,
         )
+
+    async def reboot(self, response_timeout: float = 10.0) -> None:
+        """Reboot the adapter, like the button on reboot.html.
+
+        Sends POST /ms/1/0xb00 with {"data":[]}. The adapter does not answer (measured: the
+        request just times out) and restarts about 20 s later, so a timeout, a closed connection
+        or a reset *after* the request went out counts as success. To still report real
+        problems, the adapter is queried first: unreachable or wrong credentials raise, and so
+        does an HTTP error answer to the reboot request itself.
+        """
+        await self.get_local_info()  # raises KiweeConnectionError / KiweeAuthError
+        session = await self._get_session()
+        auth = self._auth_header()
+        if self._csrf_token is None:
+            await self._refresh_csrf(session, auth)
+
+        url = f"{self._base_url}{ENDPOINT_REBOOT}"
+        try:
+            async with asyncio.timeout(response_timeout):
+                async with session.post(
+                    url,
+                    data='{"data":[]}',
+                    headers=self._ms_headers(auth, page="reboot.html"),
+                ) as resp:
+                    if resp.status == 401:
+                        raise KiweeAuthError(
+                            f"Authentication failed for Kiwee Broadband adapter at {self._host}"
+                        )
+                    if resp.status >= 400:
+                        raise KiweeConnectionError(
+                            f"HTTP {resp.status} from Kiwee Broadband adapter: {url}"
+                        )
+                    await resp.read()
+        except aiohttp.ClientConnectorError as err:
+            raise KiweeConnectionError(
+                f"Cannot connect to Kiwee Broadband adapter at {self._host}: {err}"
+            ) from err
+        except (aiohttp.ClientError, TimeoutError) as err:
+            # expected while the adapter restarts
+            LOG.debug("Connection closed during reboot of %s: %s", self._host, err)
 
     async def test_connection(self) -> bool:
         """Test connection to the adapter."""

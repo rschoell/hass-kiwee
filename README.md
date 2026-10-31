@@ -8,8 +8,8 @@ link state, who is the network controller, the other adapters on the coax networ
 between them, channels and Ethernet counters. Every adapter becomes its own device.
 
 > This is an unofficial community project and is not affiliated with Kiwee Broadband or MaxLinear.
-> The integration is **read-only**. It only sends the same queries the adapter's own web pages use
-> to display their status, and never changes a setting.
+> Apart from the optional reboot button, the integration is **read-only**. It sends the same queries
+> the adapter's own web pages use to display their status, and never changes a setting.
 
 It started as a fork of [hass-gocoax](https://github.com/homeassistant-projects/hass-gocoax) (see [Credits](#credits)).
 
@@ -63,6 +63,30 @@ Per adapter:
 | Beacon channel, First channel (diagnostic, disabled by default) | MHz |
 | Lowest Operating Frequency, Frequency Band, Channel Count | |
 | Tx power level, Beacon power level (diagnostic) | the two dropdown settings, plain numbers |
+| Reboot (button, configuration, **disabled by default**) | restarts the adapter, see below |
+
+## Reboot button
+
+Each adapter has a **Reboot** button that does what the Reboot page of the adapter's web interface does.
+It is disabled by default: enable it under *Settings -> Devices & services -> Kiwee Broadband ->
+the device -> disabled entities*.
+
+- **Rebooting the network controller interrupts every MoCA link**, and anything that uses the
+  controller as its uplink, for up to a minute. Home Assistant buttons have no confirmation step, so
+  be careful with automations. The *Network Controller* sensor shows which adapter that is.
+- After the press, the adapter's entities show as unavailable. The adapter does not answer the
+  request, so pressing the button takes about 10 seconds to return. It then keeps answering for
+  roughly 20 seconds, is unreachable for another 25 or so, and is back about 45 seconds after the
+  press (measured on a client adapter; the network controller is reported to take 30 to 60 seconds).
+  The integration waits quietly (no error spam in the log) until it has seen the adapter go down and
+  come back, checking every 10 seconds, and gives up after four minutes.
+- A reboot is refused with an error if the adapter cannot be reached.
+
+To try it outside Home Assistant first (it refuses the controller unless you add `--allow-controller`):
+
+```bash
+python tools/reboot.py 192.168.1.50
+```
 
 ## Diagnostics from the command line
 
@@ -95,7 +119,7 @@ How the adapter's web API works, and how each value is decoded, is written down 
 
 ## Not supported yet
 
-Adapter name and GPIO are not read. Settings cannot be changed from Home Assistant.
+Adapter name and GPIO are not read. Settings cannot be changed from Home Assistant (the reboot is the only action).
 
 ## Development
 

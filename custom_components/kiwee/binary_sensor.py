@@ -109,6 +109,11 @@ class KiweeBinarySensor(CoordinatorEntity[KiweeCoordinator], BinarySensorEntity)
         )
 
     @property
+    def available(self) -> bool:
+        """Unavailable while the adapter restarts."""
+        return super().available and not self.coordinator.rebooting
+
+    @property
     def is_on(self) -> bool | None:
         """Return the sensor state."""
         if not self.coordinator.data:

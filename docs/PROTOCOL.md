@@ -34,6 +34,7 @@ and comparing the responses with what the pages display.
 | `/ms/0/0x1002/GET` | `[]` | Preferred NC (1 = enabled) |
 | `/ms/0/0x10a8/GET` | `[]` | Tx Power setting |
 | `/ms/0/0x100e/GET` | `[]` | Beacon Power Level setting |
+| `/ms/1/0xb00` | `[]` | **reboot** (sent by `reboot.html`; the adapter drops the connection) |
 
 ## `0x15` local info
 
@@ -83,3 +84,11 @@ top of a word and at its middle (6 bytes per entry):
 PHY rate in Mbit/s (MoCA 2.x): `floor(3900 * ofdmbNper / ((512 + (gapNper + 10) * 2) * 46))`.
 The rate from node *a* to node *b* is the entry for *b* in the response for node *a*.
 The values match the table on `phyRates.html`.
+
+## Reboot
+
+`reboot.html` asks for a browser confirmation and then sends `POST /ms/1/0xb00` with `{"data":[]}`
+(Referer `reboot.html`). The adapter does not answer the request: a client times out (10 s tested).
+Timeline measured on a client adapter, from the moment the request was sent: it keeps answering for
+about 20 seconds, is unreachable until about 45 seconds, then answers again. The network controller
+is reported to be back after 30 to 60 seconds (the page itself claims about 10 seconds).

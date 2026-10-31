@@ -115,6 +115,11 @@
       "preferred_nc": {
         "name": "Preferred Network Controller"
       }
+    },
+    "button": {
+      "reboot": {
+        "name": "Reboot"
+      }
     }
   }
 }

@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
@@ -13,6 +14,7 @@ from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
@@ -21,11 +23,13 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
     DEFAULT_USERNAME,
     DOMAIN,
+    REBOOT_POLL_INTERVAL,
 )
-from .pykiwee import AdapterStatus, KiweeClient
+from .pykiwee import AdapterStatus, KiweeClient, RebootWatch
 from .pykiwee.exceptions import (
     KiweeAuthError,
     KiweeConnectionError,
+    KiweeError,
     KiweeTimeoutError,
 )
 
@@ -70,6 +74,10 @@ class KiweeCoordinator(DataUpdateCoordinator[AdapterStatus]):
         self._consecutive_errors = 0
         self._max_consecutive_errors = 5
 
+        self._normal_interval = timedelta(seconds=scan_interval)
+        self._reboot = RebootWatch()
+        self._reboot_cancel = None
+
     @property
     def host(self) -> str:
         """Return the host address."""
@@ -82,8 +90,70 @@ class KiweeCoordinator(DataUpdateCoordinator[AdapterStatus]):
             return self.data.mac_address
         return None
 
+    @property
+    def rebooting(self) -> bool:
+        """True from a reboot request until the adapter answers again."""
+        return self._reboot.active
+
+    async def async_reboot(self) -> None:
+        """Reboot the adapter and watch for it to come back."""
+        await self._client.reboot()
+        LOG.warning("Reboot requested for Kiwee Broadband at %s", self._host)
+        self._consecutive_errors = 0
+        self._reboot.start(time.monotonic())
+        self.update_interval = timedelta(seconds=REBOOT_POLL_INTERVAL)
+        if self._reboot_cancel:
+            self._reboot_cancel()
+        # the first probe comes once the adapter has had time to go down
+        self._reboot_cancel = async_call_later(
+            self.hass, self._reboot.min_wait + 1, self._async_probe_after_reboot
+        )
+        self.async_update_listeners()  # entities become unavailable
+
+    async def _async_probe_after_reboot(self, _now) -> None:
+        """Trigger the first update after the settling time."""
+        self._reboot_cancel = None
+        await self.async_request_refresh()
+
+    def _finish_reboot(self) -> None:
+        """Back to the normal update interval."""
+        self.update_interval = self._normal_interval
+        self.async_update_listeners()
+
+    async def _async_update_while_rebooting(self) -> AdapterStatus:
+        """Update step while the adapter restarts: quiet, no errors in the log."""
+        now = time.monotonic()
+        if self.data is None:
+            self._reboot.started = None
+            self.update_interval = self._normal_interval
+            return await self._client.get_status()
+        if self._reboot.settling(now):
+            return self.data
+        status = None
+        try:
+            status = await self._client.get_status()
+        except KiweeError as err:
+            LOG.debug("Kiwee Broadband at %s not reachable (rebooting): %s", self._host, err)
+            outcome = self._reboot.on_probe(now, reachable=False)
+        else:
+            # right after the request the adapter still answers for a while
+            outcome = self._reboot.on_probe(now, reachable=True)
+        if outcome == "back":
+            LOG.info("Kiwee Broadband at %s is back after the reboot", self._host)
+            self._consecutive_errors = 0
+            self._finish_reboot()
+            return status
+        if outcome == "timeout":
+            self._finish_reboot()
+            raise UpdateFailed(
+                f"Kiwee Broadband at {self._host} did not come back after the reboot"
+            )
+        return status if status is not None else self.data
+
     async def _async_update_data(self) -> AdapterStatus:
         """Fetch data from Kiwee Broadband adapter."""
+        if self._reboot.active:
+            return await self._async_update_while_rebooting()
         try:
             status = await self._client.get_status()
             self._consecutive_errors = 0
@@ -137,5 +207,8 @@ class KiweeCoordinator(DataUpdateCoordinator[AdapterStatus]):
 
     async def async_shutdown(self) -> None:
         """Shutdown the coordinator."""
+        if self._reboot_cancel:
+            self._reboot_cancel()
+            self._reboot_cancel = None
         await super().async_shutdown()
         # client uses shared session, don't close it

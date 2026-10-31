@@ -278,6 +278,11 @@ class KiweeSensor(CoordinatorEntity[KiweeCoordinator], SensorEntity):
         )
 
     @property
+    def available(self) -> bool:
+        """Unavailable while the adapter restarts."""
+        return super().available and not self.coordinator.rebooting
+
+    @property
     def native_value(self) -> Any:
         """Return the sensor value."""
         if not self.coordinator.data:

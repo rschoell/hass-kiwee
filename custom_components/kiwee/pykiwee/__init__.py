@@ -10,6 +10,7 @@ from .exceptions import (
     KiweeParseError,
     KiweeTimeoutError,
 )
+from .reboot import RebootWatch
 from .models import (
     AdapterStatus,
     EthernetPackets,
@@ -20,6 +21,7 @@ from .models import (
 
 __all__ = [
     "KiweeClient",
+    "RebootWatch",
     "AdapterStatus",
     "EthernetPackets",
     "NetworkPeer",
