@@ -7,15 +7,12 @@
   "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/rschoell/hass-kiwee",
-  "homeassistant": "2025.2.0",
   "integration_type": "device",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/rschoell/hass-kiwee/issues",
   "loggers": [
     "custom_components.kiwee"
   ],
-  "requirements": [
-    "aiohttp>=3.9.0"
-  ],
+  "requirements": [],
   "version": "0.2.0"
 }

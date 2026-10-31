@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Connect to Kiwee Broadband Adapter",
-        "description": "Enter the connection details for your Kiwee Broadband MoCA adapter. [☕ Tip the Author](https://buymeacoffee.com/DYks67r)",
+        "description": "Enter the connection details for your Kiwee Broadband MoCA adapter.",
         "data": {
           "host": "Host",
           "username": "Username",

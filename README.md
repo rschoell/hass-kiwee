@@ -78,6 +78,7 @@ the device -> disabled entities*.
   request, so pressing the button takes about 10 seconds to return. It then keeps answering for
   roughly 20 seconds, is unreachable for another 25 or so, and is back about 45 seconds after the
   press (measured on a client adapter; the network controller is reported to take 30 to 60 seconds).
+  In Home Assistant the entities are usually back after about a minute.
   The integration waits quietly (no error spam in the log) until it has seen the adapter go down and
   come back, checking every 10 seconds, and gives up after four minutes.
 - A reboot is refused with an error if the adapter cannot be reached.
